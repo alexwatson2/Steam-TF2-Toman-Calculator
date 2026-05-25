@@ -82,3 +82,11 @@ python main.py
     قیمت بازی‌ها به تومان و تعداد کلیدهای مورد نیاز در جدول نمایش داده می‌شود
 
 </div>
+
+📞 ارتباط با توسعه‌دهنده
+<div dir="rtl">
+پلتفرم	لینک
+🐙 GitHub	github.com/alexwatson2/
+📷 Instagram	@vishata_1
+✈ Telegram	@veshata
+</div>
