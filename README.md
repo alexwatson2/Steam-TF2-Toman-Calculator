@@ -40,4 +40,4 @@ Python 3.8 یا بالاتر
 
 
 pip install PyQt5 requests beautifulsoup4
-</div>
+
