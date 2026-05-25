@@ -126,9 +126,18 @@ python main.py
 
     🐛 باگ‌ها را گزارش کنید
 
+  
     💡 ایده‌های خود را برای بهبود به اشتراک بگذارید
 
     📢 برنامه را به دوستان خود معرفی کنید
 
 </div>
 <div align="center"> Made with ❤️ by AlexWatson </div>
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+© 2026 AlexWatson - All Rights Reserved
