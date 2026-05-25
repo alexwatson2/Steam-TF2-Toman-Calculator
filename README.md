@@ -35,6 +35,8 @@
 برای اجرای برنامه به موارد زیر نیاز دارید:
 
 ```bash
+https://github.com/alexwatson2/Steam-TF2-Toman-Calculator/releases/tag/SteamPriceCalculator
+
 Python 3.8 یا بالاتر
 pip install PyQt5 requests beautifulsoup4
 یا
