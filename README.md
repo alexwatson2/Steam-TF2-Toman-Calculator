@@ -85,8 +85,8 @@ python main.py
 
 📞 ارتباط با توسعه‌دهنده
 <div dir="rtl">
+ 
 پلتفرم	لینک
-🐙 GitHub	github.com/alexwatson2/
 📷 Instagram	@vishata_1
-✈ Telegram	@veshata
+🐙 Telegram	@veshata
 </div>
