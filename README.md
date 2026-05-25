@@ -1,4 +1,7 @@
 # 🎮 Steam Price Calculator - ماشین حساب قیمت بازی‌های استیم
+## 📸 تصاویر برنامه
+
+![نمای اصلی برنامه](https://github.com/user-attachments/assets/9fc25345-87f9-4e2b-9346-43214ba10513)
 
 <div dir="rtl">
 
