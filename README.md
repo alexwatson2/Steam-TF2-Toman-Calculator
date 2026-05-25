@@ -112,6 +112,4 @@ python main.py
     📢 برنامه را به دوستان خود معرفی کنید
 
 </div>
-```bash
- align="center"> Made with ❤️ by AlexWatson 
-```
+<div align="center"> Made with ❤️ by AlexWatson </div>
