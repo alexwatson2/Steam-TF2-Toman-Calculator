@@ -42,7 +42,7 @@ pip install PyQt5 requests beautifulsoup4
  📋 اجرا
 ```bash
 python main.py
-
+```
 
 
 <div dir="rtl">
@@ -112,5 +112,6 @@ python main.py
     📢 برنامه را به دوستان خود معرفی کنید
 
 </div>
-
-<div align="center"> Made with ❤️ by AlexWatson </div> ```
+```bash
+ align="center"> Made with ❤️ by AlexWatson 
+```
