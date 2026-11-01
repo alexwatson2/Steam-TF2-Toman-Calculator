@@ -1,3 +1,5 @@
+#This line one or in 1 
+
 # -*- coding: utf-8 -*-
 # ============================================================================
 # Copyright (c) 2026 AlexWatson
@@ -58,9 +60,166 @@ from PyQt5.QtWidgets import (
     QStatusBar, QScrollArea, QDialog, QDialogButtonBox,
     QCheckBox, QSpinBox, QTabWidget
 )
-from PyQt5.QtCore import Qt, QThread, pyqtSignal
+from PyQt5.QtWidgets import QCompleter
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, QTimer
 from PyQt5.QtGui import QFont
+# ==================== دیالوگ سفارشی بدون صدا ====================
 
+class SilentDialog(QDialog):
+    """دیالوگ سفارشی که جای QMessageBox استفاده می‌شود و هیچ صدایی ندارد"""
+    
+    def __init__(self, parent=None, icon_type="info", title="", text=""):
+        super().__init__(parent)
+        self.setWindowTitle(title)
+        self.setModal(True)
+        self.setMinimumWidth(400)
+        
+        # غیرفعال کردن صدا در سطح ویندوز
+        #self.setWindowFlags(self.windowFlags() | Qt.CustomizeWindowHint)
+        
+        layout = QVBoxLayout(self)
+        layout.setSpacing(15)
+        layout.setContentsMargins(20, 20, 20, 20)
+        
+        # ردیف اول: آیکون + متن
+        content_row = QHBoxLayout()
+        
+        icon_label = QLabel()
+        icon_label.setFixedSize(50, 50)
+        icon_label.setAlignment(Qt.AlignCenter)
+        
+        if icon_type == "info":
+            icon_label.setText("ℹ️")
+            icon_label.setStyleSheet("font-size: 30px;")
+        elif icon_type == "warning":
+            icon_label.setText("⚠️")
+            icon_label.setStyleSheet("font-size: 30px;")
+        elif icon_type == "critical":
+            icon_label.setText("❌")
+            icon_label.setStyleSheet("font-size: 30px;")
+        
+        content_row.addWidget(icon_label, alignment=Qt.AlignTop)
+        
+        text_label = QLabel(text)
+        text_label.setWordWrap(True)
+        text_label.setFont(QFont("Tahoma", 10))
+        text_label.setMinimumWidth(300)
+        content_row.addWidget(text_label, 1)
+        
+        layout.addLayout(content_row)
+        
+        # دکمه OK
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
+        ok_btn = QPushButton("تأیید")
+        ok_btn.setMinimumWidth(100)
+        ok_btn.setMinimumHeight(32)
+        ok_btn.setFont(QFont("Tahoma", 10, QFont.Bold))
+        ok_btn.clicked.connect(self.accept)
+        ok_btn.setDefault(True)
+        btn_layout.addWidget(ok_btn)
+        layout.addLayout(btn_layout)
+    
+    def showEvent(self, event):
+        """جلوگیری از صدای ویندوز در زمان نمایش"""
+        # این کار برای اطمینان از اینکه ویندوز صدا نزنه
+        self.setWindowModality(Qt.NonModal)
+        super().showEvent(event)
+        self.setWindowModality(Qt.ApplicationModal)
+
+
+# ==================== جایگزین‌های QMessageBox ====================
+
+def silent_information(parent, title, text, *args, **kwargs):
+    dlg = SilentDialog(parent, icon_type="info", title=title, text=text)
+    return dlg.exec_()
+
+
+def silent_warning(parent, title, text, *args, **kwargs):
+    dlg = SilentDialog(parent, icon_type="warning", title=title, text=text)
+    return dlg.exec_()
+
+
+def silent_critical(parent, title, text, *args, **kwargs):
+    dlg = SilentDialog(parent, icon_type="critical", title=title, text=text)
+    return dlg.exec_()
+
+
+# جایگزینی متدهای QMessageBox با نسخه سفارشی
+QMessageBox.information = staticmethod(silent_information)
+QMessageBox.warning = staticmethod(silent_warning)
+QMessageBox.critical = staticmethod(silent_critical)
+
+
+# ==================== لیست کامل کشورها با کد ISO ====================
+COUNTRIES_LIST = [
+    ("us", "ایالات متحده آمریکا", "United States"),
+    ("ua", "اوکراین", "Ukraine"),
+    ("tr", "ترکیه", "Turkey"),
+    ("ar", "آرژانتین", "Argentina"),
+    ("ru", "روسیه", "Russia"),
+    ("tw", "تایوان", "Taiwan"),
+    ("dk", "دانمارک", "Denmark"),
+    ("in", "هند", "India"),
+    ("br", "برزیل", "Brazil"),
+    ("gb", "بریتانیا", "United Kingdom"),
+    ("de", "آلمان", "Germany"),
+    ("fr", "فرانسه", "France"),
+    ("it", "ایتالیا", "Italy"),
+    ("es", "اسپانیا", "Spain"),
+    ("ca", "کانادا", "Canada"),
+    ("au", "استرالیا", "Australia"),
+    ("jp", "ژاپن", "Japan"),
+    ("kr", "کره جنوبی", "South Korea"),
+    ("cn", "چین", "China"),
+    ("mx", "مکزیک", "Mexico"),
+    ("pl", "لهستان", "Poland"),
+    ("kz", "قزاقستان", "Kazakhstan"),
+    ("by", "بلاروس", "Belarus"),
+    ("za", "آفریقای جنوبی", "South Africa"),
+    ("no", "نروژ", "Norway"),
+    ("se", "سوئد", "Sweden"),
+    ("ch", "سوئیس", "Switzerland"),
+    ("nl", "هلند", "Netherlands"),
+    ("be", "بلژیک", "Belgium"),
+    ("at", "اتریش", "Austria"),
+    ("pt", "پرتغال", "Portugal"),
+    ("gr", "یونان", "Greece"),
+    ("cz", "جمهوری چک", "Czech Republic"),
+    ("hu", "مجارستان", "Hungary"),
+    ("ro", "رومانی", "Romania"),
+    ("bg", "بلغارستان", "Bulgaria"),
+    ("rs", "صربستان", "Serbia"),
+    ("hr", "کرواسی", "Croatia"),
+    ("sa", "عربستان سعودی", "Saudi Arabia"),
+    ("ae", "امارات متحده عربی", "United Arab Emirates"),
+    ("qa", "قطر", "Qatar"),
+    ("kw", "کویت", "Kuwait"),
+    ("il", "اسرائیل", "Israel"),
+    ("eg", "مصر", "Egypt"),
+    ("sg", "سنگاپور", "Singapore"),
+    ("my", "مالزی", "Malaysia"),
+    ("th", "تایلند", "Thailand"),
+    ("id", "اندونزی", "Indonesia"),
+    ("ph", "فیلیپین", "Philippines"),
+    ("vn", "ویتنام", "Vietnam"),
+    ("nz", "نیوزیلند", "New Zealand"),
+    ("cl", "شیلی", "Chile"),
+    ("co", "کلمبیا", "Colombia"),
+    ("pe", "پرو", "Peru"),
+]
+# ==================== نگاشت ارز به کد کشور ====================
+CURRENCY_TO_COUNTRY = {
+    "USD": "us", "EUR": "de", "GBP": "gb", "RUB": "ru", "PLN": "pl",
+    "BRL": "br", "JPY": "jp", "NOK": "no", "IDR": "id", "MYR": "my",
+    "PHP": "ph", "SGD": "sg", "THB": "th", "VND": "vn", "KRW": "kr",
+    "TRY": "tr", "UAH": "ua", "MXN": "mx", "CAD": "ca", "AUD": "au",
+    "NZD": "nz", "CNY": "cn", "INR": "in", "CLP": "cl", "PEN": "pe",
+    "COP": "co", "ZAR": "za", "TWD": "tw", "SAR": "sa", "AED": "ae",
+    "SEK": "se", "ARS": "ar", "ILS": "il", "KZT": "kz", "KWD": "kw",
+    "QAR": "qa", "CHF": "ch", "CZK": "cz", "HUF": "hu", "RON": "ro",
+    "BGN": "bg", "DKK": "dk",
+}
 
 # ==================== دیالوگ تنظیمات ====================
 class SettingsDialog(QDialog):
@@ -427,11 +586,13 @@ class RegionSearchDialog(QDialog):
     
     def select_region(self):
         current_idx = self.region_list.currentIndex()
-        if current_idx >= 0:
-            code, symbol = self.region_list.itemData(current_idx)
-            display_text = self.region_list.currentText()
-            self.region_selected.emit(code, symbol, display_text)
-            self.accept()
+        if current_idx < 0:
+            QMessageBox.warning(self, "اخطار", "لطفاً یک کشور یا ارز از لیست انتخاب کنید!")
+            return
+        code, symbol = self.region_list.itemData(current_idx)
+        display_text = self.region_list.currentText()
+        self.region_selected.emit(code, symbol, display_text)
+        self.accept()
 
 
 # ==================== Thread دریافت قیمت از استیم مارکت با Proxy ====================
@@ -564,52 +725,475 @@ class FetchPriceThread(QThread):
             self.finished.emit(0, f"خطا: {str(e)[:50]}")
     
     def extract_price(self, soup):
-        price = None
-        
-        price_patterns = [
-            '.product-price', '.price', '.amount', '.current-price',
-            '.woocommerce-Price-amount', 'ins .woocommerce-Price-amount',
-            '.summary.entry-summary .price', '[class*="price"]'
+        """استخراج قیمت - پشتیبانی از چند سایت مختلف"""
+
+        # ==================== روش ۱: ووکامرس - قیمت فروش (با ins) ====================
+        # مهم‌ترین روش چون gamerzshop و اکثر ووکامرس‌ها این ساختار رو دارن
+        sale_selectors = [
+            'ins .woocommerce-Price-amount bdi',
+            'ins .woocommerce-Price-amount',
+            'ins .amount bdi',
+            'ins .amount',
+            '.price_sale',
         ]
-        
-        for pattern in price_patterns:
-            elements = soup.select(pattern)
+
+        for selector in sale_selectors:
+            elements = soup.select(selector)
             for elem in elements:
                 text = elem.get_text().strip()
                 extracted = self.clean_price(text)
-                if extracted and 100000 < extracted < 1000000:
-                    price = extracted
-                    break
-            if price:
-                break
-        
-        if not price:
-            page_text = soup.get_text()
-            matches = re.findall(r'(\d{1,3}(?:[\,\.]\d{3})*)\s*(?:تومان)', page_text)
-            for match in matches:
-                num = self.clean_number(match)
-                if num and 100000 < num < 1000000:
-                    price = num
-                    break
-        
-        return price
+                if extracted and 100000 < extracted < 2000000:
+                    return extracted
+
+        # ==================== روش ۲: game4sell (priceDigit) ====================
+        game4sell_selectors = [
+            '.priceDigit',
+            'div.price .priceDigit',
+            'div.price span .priceDigit',
+            '.price .priceDigit',
+        ]
+
+        for selector in game4sell_selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text().strip()
+                extracted = self.clean_price(text)
+                if extracted and 100000 < extracted < 2000000:
+                    return extracted
+
+        # ==================== روش ۳: wow-online (product_field price) ====================
+        wow_selectors = [
+            'p.product_field.price .woocommerce-Price-amount bdi',
+            'p.product_field.price .woocommerce-Price-amount',
+            'p.product_field.price',
+            '.product_field.price',
+        ]
+
+        for selector in wow_selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text().strip()
+                extracted = self.clean_price(text)
+                if extracted and 100000 < extracted < 2000000:
+                    return extracted
+
+        # ==================== روش ۴: ووکامرس عمومی ====================
+        woocommerce_selectors = [
+            'p.price .woocommerce-Price-amount bdi',
+            'p.price .woocommerce-Price-amount',
+            '.price .woocommerce-Price-amount bdi',
+            '.price .woocommerce-Price-amount',
+            '.woocommerce-Price-amount bdi',
+            '.woocommerce-Price-amount',
+        ]
+
+        for selector in woocommerce_selectors:
+            elements = soup.select(selector)
+            for elem in elements:
+                text = elem.get_text().strip()
+                extracted = self.clean_price(text)
+                if extracted and 100000 < extracted < 2000000:
+                    return extracted
+
+        # ==================== روش ۵: meta tag ====================
+        meta_price = soup.find('meta', {'property': 'product:price:amount'})
+        if meta_price and meta_price.get('content'):
+            try:
+                price = float(str(meta_price['content']).replace(',', ''))
+                if price > 2000000:
+                    price = price / 10
+                if 100000 < price < 2000000:
+                    return price
+            except:
+                pass
+
+        # اگه هیچی پیدا نشد
+        return None
     
     def clean_price(self, text):
+        """تبدیل متن قیمت به عدد"""
         if not text:
             return None
         text = text.replace('٬', ',').replace('٫', '.').strip()
-        matches = re.findall(r'(\d{1,3}(?:[\,\.]\d{3})*(?:\.\d+)?)\s*(?:تومان)', text)
+        matches = re.findall(r'(\d{1,3}(?:[\,\.]\d{3})*(?:\.\d+)?)', text)
         for match in matches:
-            return self.clean_number(match)
+            cleaned = self.clean_number(match)
+            if cleaned:
+                return cleaned
         return None
-    
+
     def clean_number(self, num_str):
+        """پاک‌سازی عدد از کاراکترهای اضافی"""
         try:
             cleaned = num_str.replace(',', '').replace(' ', '').replace('٬', '').replace('٫', '.')
             return float(cleaned)
         except:
             return None
+# ==================== Thread دریافت قیمت منطقه‌ای از استیم ====================
+class FetchSteamRegionalPriceThread(QThread):
+    finished = pyqtSignal(dict, str)
+    status = pyqtSignal(str)
 
+    def __init__(self, app_id, country_code="ua", timeout=20, proxy_enabled=False,
+                 proxy_type="socks5", proxy_host="", proxy_port="",
+                 proxy_username="", proxy_password=""):
+        super().__init__()
+        self.app_id = app_id
+        self.country_code = country_code.lower()
+        self.timeout = timeout
+        self.proxy_enabled = proxy_enabled
+        self.proxy_type = proxy_type
+        self.proxy_host = proxy_host
+        self.proxy_port = proxy_port
+        self.proxy_username = proxy_username
+        self.proxy_password = proxy_password
+
+    def get_proxy_dict(self):
+        if not self.proxy_enabled or not self.proxy_host or not self.proxy_port:
+            return None
+        if self.proxy_username and self.proxy_password:
+            proxy_url = f"{self.proxy_type}://{self.proxy_username}:{self.proxy_password}@{self.proxy_host}:{self.proxy_port}"
+        else:
+            proxy_url = f"{self.proxy_type}://{self.proxy_host}:{self.proxy_port}"
+        return {"http": proxy_url, "https": proxy_url}
+
+    def run(self):
+        try:
+            self.status.emit(f"🔄 دریافت قیمت برای App ID {self.app_id} در منطقه {self.country_code.upper()}...")
+            url = "https://store.steampowered.com/api/appdetails"
+            params = {"appids": self.app_id, "cc": self.country_code, "filters": "price_overview"}
+            proxy_dict = self.get_proxy_dict()
+            response = requests.get(url, params=params, proxies=proxy_dict, timeout=self.timeout)
+            response.raise_for_status()
+            data = response.json()
+            if data and str(self.app_id) in data and data[str(self.app_id)].get("success"):
+                app_data = data[str(self.app_id)]["data"]
+                if "price_overview" in app_data:
+                    self.finished.emit(app_data["price_overview"], "")
+                else:
+                    self.finished.emit({}, "این بازی در این منطقه قیمت‌گذاری نشده است.")
+            else:
+                self.finished.emit({}, "اطلاعات بازی یافت نشد.")
+        except requests.exceptions.Timeout:
+            self.finished.emit({}, "زمان درخواست به پایان رسید (Timeout).")
+        except requests.exceptions.ConnectionError:
+            self.finished.emit({}, "خطا در اتصال به سرور استیم.")
+        except Exception as e:
+            self.finished.emit({}, f"خطا: {str(e)[:80]}")
+
+
+class SearchGameThread(QThread):
+    finished = pyqtSignal(list, str)
+    status = pyqtSignal(str)
+
+    def __init__(self, query, timeout=20):
+        super().__init__()
+        self.query = query
+        self.timeout = timeout
+
+    def search_api(self, term):
+        """یک بار جستجو در استیم با ترم داده شده"""
+        url = "https://store.steampowered.com/api/storesearch/"
+        params = {"term": term, "l": "english", "cc": "us"}
+        response = requests.get(url, params=params, timeout=self.timeout)
+        response.raise_for_status()
+        data = response.json()
+        results = []
+        if data and "items" in data:
+            for item in data["items"]:
+                price_data = item.get("price", {}) or {}
+                results.append({
+                    "app_id": item.get("id"),
+                    "name": item.get("name"),
+                    "price": price_data.get("final", 0) / 100 if price_data else 0,
+                    "currency": price_data.get("currency", "USD"),
+                    "tiny_image": item.get("tiny_image", "")
+                })
+        return results
+
+    def run(self):
+        try:
+            self.status.emit(f"🔍 در حال جستجوی «{self.query}»...")
+
+            # مرحله ۱: جستجوی مستقیم
+            results = self.search_api(self.query)
+
+            # مرحله ۲: اگر نتیجه نبود، با کلمات کمتر امتحان کن
+            if not results:
+                words = self.query.split()
+                if len(words) > 1:
+                    self.status.emit(f"🔄 تلاش مجدد با کلمات کمتر...")
+                    for i in range(len(words) - 1, 0, -1):
+                        partial = " ".join(words[:i])
+                        results = self.search_api(partial)
+                        if results:
+                            break
+
+            # مرحله ۳: اگر باز هم نبود، با ترم‌های پیشنهادی رایج امتحان کن
+            if not results:
+                self.status.emit(f"🔄 تلاش با نسخه اصلاح‌شده...")
+                # حذف کاراکترهای اضافی
+                cleaned = re.sub(r'[^\w\s]', '', self.query).strip()
+                if cleaned != self.query:
+                    results = self.search_api(cleaned)
+
+            if results:
+                self.finished.emit(results, "")
+            else:
+                self.finished.emit([], f"نتیجه‌ای برای «{self.query}» یافت نشد. املای بازی را چک کنید یا از نام انگلیسی استفاده کنید.")
+
+        except requests.exceptions.Timeout:
+            self.finished.emit([], "زمان جستجو به پایان رسید.")
+        except Exception as e:
+            self.finished.emit([], f"خطا در جستجو: {str(e)[:80]}")
+
+
+# ==================== دیالوگ جستجوی بازی و قیمت منطقه‌ای ====================
+class GameSearchDialog(QDialog):
+    def __init__(self, parent=None, country_code="ua", proxy_settings=None):
+        super().__init__(parent)
+        self.parent = parent
+        self.country_code = country_code
+        self.proxy_settings = proxy_settings or {}
+        self.setWindowTitle("🔍 جستجوی بازی و قیمت منطقه‌ای")
+        self.setMinimumSize(900, 700)
+        self.setModal(True)
+        self.search_threads = []
+        self.silent_mode = False  # 👈 این خط جدید
+        self.setup_ui()
+
+    def setup_ui(self):
+        layout = QVBoxLayout(self)
+
+        # ===== بخش انتخاب منطقه =====
+        region_group = QGroupBox("🌍 منطقه قیمت‌گذاری")
+        region_layout = QHBoxLayout(region_group)
+        region_layout.addWidget(QLabel("کشور:"))
+
+        self.country_combo = QComboBox()
+        self.country_combo.setEditable(True)
+        self.country_combo.setInsertPolicy(QComboBox.NoInsert)
+        self.country_combo.setMinimumHeight(35)
+        self.country_combo.setMinimumWidth(350)
+
+        # پر کردن کمبوباکس با کشورها
+        for code, fa_name, en_name in COUNTRIES_LIST:
+            display = f"{fa_name} ({en_name}) - {code.upper()}"
+            self.country_combo.addItem(display, code)
+
+        # Completer برای جستجو با اسم فارسی یا انگلیسی یا کد
+        completer = QCompleter()
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCompletionMode(QCompleter.PopupCompletion)
+        self.country_combo.setCompleter(completer)
+
+        # انتخاب کشور فعلی
+        self.set_current_country(self.country_code)
+
+        region_layout.addWidget(self.country_combo)
+
+        help_region = QLabel("(می‌توانی اسم فارسی، انگلیسی یا کد را تایپ کنی)")
+        help_region.setStyleSheet("color: #888; font-size: 9px;")
+        region_layout.addWidget(help_region)
+        region_layout.addStretch()
+        layout.addWidget(region_group)
+
+        # ===== بخش جستجوی بازی =====
+        search_group = QGroupBox("🔍 جستجوی بازی")
+        search_layout = QHBoxLayout(search_group)
+
+        self.search_entry = QLineEdit()
+        self.search_entry.setPlaceholderText("نام بازی را وارد کنید... (فارسی یا انگلیسی)")
+        self.search_entry.setMinimumHeight(35)
+        self.search_entry.returnPressed.connect(self.perform_search)
+        search_layout.addWidget(self.search_entry)
+
+        self.search_btn = QPushButton("🔍 جستجو")
+        self.search_btn.setMinimumHeight(35)
+        self.search_btn.setMinimumWidth(120)
+        self.search_btn.clicked.connect(self.perform_search)
+        search_layout.addWidget(self.search_btn)
+        layout.addWidget(search_group)
+
+        # ===== وضعیت =====
+        self.status_label = QLabel("آماده برای جستجو")
+        self.status_label.setAlignment(Qt.AlignCenter)
+        self.status_label.setStyleSheet("color: #00adb5; padding: 5px;")
+        layout.addWidget(self.status_label)
+
+        # ===== جدول نتایج =====
+        self.results_table = QTableWidget()
+        self.results_table.setColumnCount(5)
+        self.results_table.setHorizontalHeaderLabels([
+            "App ID", "نام بازی", "قیمت (منطقه‌ای)", "واحد پول", "عملیات"
+        ])
+        header = self.results_table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.Stretch)
+        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
+        self.results_table.setAlternatingRowColors(True)
+        self.results_table.setMinimumHeight(380)
+        self.results_table.verticalHeader().setDefaultSectionSize(40)
+        layout.addWidget(self.results_table)
+
+        # ===== دکمه‌ها =====
+        btn_layout = QHBoxLayout()
+        self.fetch_all_btn = QPushButton("📥 دریافت قیمت منطقه‌ای همه")
+        self.fetch_all_btn.setMinimumHeight(35)
+        self.fetch_all_btn.clicked.connect(self.fetch_all_regional_prices)
+        btn_layout.addWidget(self.fetch_all_btn)
+        btn_layout.addStretch()
+        close_btn = QPushButton("❌ بستن")
+        close_btn.setMinimumHeight(35)
+        close_btn.setMinimumWidth(120)
+        close_btn.clicked.connect(self.reject)
+        btn_layout.addWidget(close_btn)
+        layout.addLayout(btn_layout)
+
+    def set_current_country(self, code):
+        """انتخاب کشور بر اساس کد"""
+        for i in range(self.country_combo.count()):
+            if self.country_combo.itemData(i) == code.lower():
+                self.country_combo.setCurrentIndex(i)
+                return
+        # اگر پیدا نشد، اولین مورد
+        self.country_combo.setCurrentIndex(0)
+
+    def get_current_country(self):
+        """گرفتن کد کشور از کمبوباکس (چه از لیست انتخاب شده چه دستی تایپ شده)"""
+        idx = self.country_combo.currentIndex()
+        if idx >= 0 and self.country_combo.currentText() == self.country_combo.itemText(idx):
+            data = self.country_combo.itemData(idx)
+            if data:
+                return data.lower()
+
+        # حالت دستی: کاربر تایپ کرده
+        text = self.country_combo.currentText().strip()
+
+        # اگر کد ۲ حرفی بود
+        if len(text) == 2 and text.isalpha():
+            return text.lower()
+
+        # جستجو در لیست بر اساس اسم فارسی یا انگلیسی
+        text_lower = text.lower()
+        for code, fa_name, en_name in COUNTRIES_LIST:
+            if (text_lower in fa_name.lower() or
+                text_lower in en_name.lower() or
+                code == text_lower):
+                return code
+
+        # پیش‌فرض
+        return "us"
+
+    def perform_search(self):
+        query = self.search_entry.text().strip()
+        if not query:
+            QMessageBox.warning(self, "اخطار", "لطفاً نام بازی را وارد کنید!")
+            return
+        self.results_table.setRowCount(0)
+        self.search_btn.setEnabled(False)
+        self.search_btn.setText("در حال جستجو...")
+        self.status_label.setText(f"🔍 در حال جستجوی «{query}»...")
+        timeout = self.proxy_settings.get("timeout", 20)
+        thread = SearchGameThread(query, timeout=timeout)
+        thread.finished.connect(self.on_search_finished)
+        thread.status.connect(lambda msg: self.status_label.setText(msg))
+        self.search_threads.append(thread)
+        thread.start()
+
+    def on_search_finished(self, results, error):
+        self.search_btn.setEnabled(True)
+        self.search_btn.setText("🔍 جستجو")
+        if error:
+            self.status_label.setText(f"❌ {error}")
+            QMessageBox.warning(self, "خطا", error)
+            return
+        if not results:
+            self.status_label.setText("⚠️ نتیجه‌ای یافت نشد.")
+            return
+        self.status_label.setText(f"✅ {len(results)} نتیجه یافت شد.")
+        self.results_table.setRowCount(len(results))
+        for i, game in enumerate(results):
+            self.results_table.setItem(i, 0, QTableWidgetItem(str(game["app_id"])))
+            self.results_table.setItem(i, 1, QTableWidgetItem(game["name"]))
+            self.results_table.setItem(i, 2, QTableWidgetItem(f"{game['price']:.2f}"))
+            self.results_table.setItem(i, 3, QTableWidgetItem(game["currency"]))
+            fetch_btn = QPushButton("📥 قیمت منطقه‌ای")
+            fetch_btn.setMinimumHeight(28)
+            fetch_btn.clicked.connect(lambda checked, r=i: self.fetch_regional_price(r))
+            self.results_table.setCellWidget(i, 4, fetch_btn)
+
+    def fetch_regional_price(self, row):
+        app_id_item = self.results_table.item(row, 0)
+        if not app_id_item:
+            return
+        app_id = app_id_item.text()
+        country = self.get_current_country()
+        self.status_label.setText(f"🔄 دریافت قیمت برای App ID {app_id} در منطقه {country.upper()}...")
+        btn = self.results_table.cellWidget(row, 4)
+        if btn:
+            btn.setEnabled(False)
+            btn.setText("...")
+        thread = FetchSteamRegionalPriceThread(app_id=app_id, country_code=country, **self.proxy_settings)
+        thread.finished.connect(lambda price_data, err: self.on_regional_price_received(price_data, err, row))
+        thread.status.connect(lambda msg: self.status_label.setText(msg))
+        self.search_threads.append(thread)
+        thread.start()
+
+    def fetch_all_regional_prices(self):
+        rows = self.results_table.rowCount()
+        if rows == 0:
+            QMessageBox.information(self, "توجه", "ابتدا یک بازی را جستجو کنید.")
+            return
+        # حالت بی‌صدا برای جلوگیری از باز شدن چند پاپ‌آپ
+        self.silent_mode = True
+        self.status_label.setText(f"🔄 دریافت قیمت برای {rows} بازی... (لطفاً صبر کنید)")
+        for i, row in enumerate(range(rows)):
+            QTimer.singleShot(i * 500, lambda r=row: self.fetch_regional_price(r))
+        # بعد از همه درخواست‌ها، حالت بی‌صدا رو خاموش کن
+        QTimer.singleShot(rows * 500 + 3000, self._end_silent_mode)
+
+    def _end_silent_mode(self):
+        """بعد از اتمام دریافت گروهی، حالت بی‌صدا رو خاموش می‌کند"""
+        self.silent_mode = False
+        self.status_label.setText("✅ دریافت گروهی تمام شد.")
+
+    def on_regional_price_received(self, price_data, error, row):
+        btn = self.results_table.cellWidget(row, 4)
+        if btn:
+            btn.setEnabled(True)
+            btn.setText("📥 قیمت منطقه‌ای")
+        if error:
+            self.status_label.setText(f"❌ {error}")
+            self.results_table.setItem(row, 2, QTableWidgetItem("—"))
+            self.results_table.setItem(row, 3, QTableWidgetItem("—"))
+            return
+            
+        currency = price_data.get("currency", "")
+        final_price = price_data.get("final", 0) / 100
+        initial_price = price_data.get("initial", 0) / 100
+        discount = price_data.get("discount_percent", 0)
+        price_text = f"{final_price:.2f}"
+        if discount > 0:
+            price_text = f"{final_price:.2f}  (🔻{discount}%)"
+        self.results_table.setItem(row, 2, QTableWidgetItem(price_text))
+        self.results_table.setItem(row, 3, QTableWidgetItem(currency))
+        game_name = self.results_table.item(row, 1).text() if self.results_table.item(row, 1) else ""
+        country = self.get_current_country().upper()    
+        self.status_label.setText(f"✅ قیمت {game_name} در {country}: {final_price:.2f} {currency}")
+        # فقط اگه حالت بی‌صدا نیست، پاپ‌آپ نشون بده
+        if not self.silent_mode:
+            QMessageBox.information(
+                self, "💰 قیمت منطقه‌ای",
+                f"🎮 بازی: {game_name}\n🌍 منطقه: {country}\n"
+                f"💵 قیمت اولیه: {initial_price:.2f} {currency}\n"
+                f"🎯 قیمت نهایی: {final_price:.2f} {currency}\n"
+                f"🔻 تخفیف: {discount}%"
+        )        
+        
 
 class SteamPriceCalculator(QMainWindow):
     """کلاس اصلی نرم‌افزار"""
@@ -716,6 +1300,11 @@ class SteamPriceCalculator(QMainWindow):
         self.region_btn.setFont(QFont("Tahoma", 9))
         self.region_btn.clicked.connect(self.open_region_selector)
         toolbar.addWidget(self.region_btn)
+        self.search_game_btn = QPushButton("🔍 جستجوی بازی")
+        self.search_game_btn.setMinimumHeight(32)
+        self.search_game_btn.setFont(QFont("Tahoma", 9))
+        self.search_game_btn.clicked.connect(self.open_game_search)
+        toolbar.addWidget(self.search_game_btn)
         
         self.currency_display_label = QLabel("")
         self.currency_display_label.setFrameStyle(QFrame.Panel)
@@ -756,6 +1345,20 @@ class SteamPriceCalculator(QMainWindow):
         dialog = RegionSearchDialog(self, self.current_currency)
         dialog.region_selected.connect(self.on_region_selected)
         dialog.exec_()
+    def open_game_search(self):
+        """باز کردن پنجره جستجوی بازی و قیمت منطقه‌ای"""
+        country_code = CURRENCY_TO_COUNTRY.get(self.current_currency.upper(), "us")
+        proxy_settings = {
+            "proxy_enabled": self.proxy_enabled,
+            "proxy_type": self.proxy_type,
+            "proxy_host": self.proxy_host,
+            "proxy_port": self.proxy_port,
+            "proxy_username": self.proxy_username,
+            "proxy_password": self.proxy_password,
+            "timeout": self.request_timeout
+        }
+        dialog = GameSearchDialog(self, country_code=country_code, proxy_settings=proxy_settings)  
+        dialog.exec_()        
     
     def on_region_selected(self, currency_code, currency_symbol, country_display):
         self.current_currency = currency_code
@@ -1403,3 +2006,9 @@ if __name__ == "__main__":
     window = SteamPriceCalculator()
     window.show()
     sys.exit(app.exec_())
+    
+    
+    
+    
+    
+# this line 2020 okey?    
